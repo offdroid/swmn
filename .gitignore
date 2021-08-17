@@ -1,0 +1,5 @@
+/target
+# Database
+swmn.db
+# Log files
+*.log

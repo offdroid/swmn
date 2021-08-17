@@ -1,0 +1,43 @@
+[package]
+name = "swmn"
+version = "0.1.0"
+authors = ["Filip Skubacz <filip.skubacz00@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cert = { path = "cert/" }
+database = { path = "database/" }
+api = { path = "api/" }
+common = { path = "common/" }
+web = { path = "web/", optional = true }
+rocket = { version = "0.5.0-rc.1", features = ["json", "secrets"] }
+rocket_dyn_templates = { version = "0.1.0-rc.1", features = ["handlebars"] }
+rocket_sync_db_pools = { version = "0.1.0-rc.1", features = [ "diesel_sqlite_pool" ] }
+diesel = { version = "1.3", features = ["sqlite", "r2d2", "chrono"] }
+diesel_migrations = "1.3"
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_urlencoded = "0.7.0"
+clap = "2.33.3"
+log = "0.4"
+fern = "0.6"
+chrono = "0.4"
+time = "0.2"
+keyring = "0.10.1"
+rpassword = "5.0"
+shell-words = "1.0.0"
+
+[dev-dependencies]
+assert_cmd = "1.0.7"
+predicates = "2.0.0"
+tempfile = "3.2.0"
+
+[workspace]
+members = ["cert", "database", "web", "api", "common"]
+
+[features]
+web-interface = ["web"]
+no-rest-api = []
+tls = ["rocket/tls"]

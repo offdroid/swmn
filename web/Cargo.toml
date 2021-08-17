@@ -1,0 +1,24 @@
+[package]
+name = "web"
+version = "0.1.0"
+authors = ["Filip Skubacz <filip.skubacz00@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cert = { path = "../cert/" }
+database = { path = "../database/" }
+api = { path = "../api/" }
+common = { path = "../common/" }
+rocket = { version = "0.5.0-rc.1", features = ["tls", "json", "secrets"] }
+rocket_dyn_templates = { version = "0.1.0-rc.1", features = ["handlebars"] }
+rocket_sync_db_pools = { version = "0.1.0-rc.1", features = [
+  "diesel_sqlite_pool"
+] }
+diesel = { version = "1.3", features = ["sqlite", "r2d2", "chrono"] }
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_urlencoded = "0.7.0"
+log = "0.4"
+time = "0.2"

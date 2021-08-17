@@ -1,0 +1,105 @@
+{{#*inline "page"}}
+<style>
+table, th, td {
+  border: 1px solid black;
+}
+
+input[type=text].search  {
+  padding: 8px 12px;
+  margin: 8px 0;
+  display: inline-block;
+  box-sizing: border-box;
+}
+</style>
+
+{{#if is_search}}
+<form action="/web/search">
+    <input class="search" type="text" placeholder="Search.." name="q" value="{{query}}" autocomplete="off">
+    <button type="submit">Search</button>
+</form>
+<a href="/web/list">Change to list</a>
+{{else}}
+<form action="/web/list">
+
+    <label for="order-by-category-field">Sort by</label>
+    <select name="order_by_category" id="order-by-category-field">
+        <option value="any" {{#if (eq order_by_category "None")}}selected{{/if}}>Any</option>
+        <option value="Id" {{#if (eq order_by_category "Id")}}selected{{/if}}>Id</option>
+        <option value="DateCreated" {{#if (eq order_by_category "DateCreated")}}selected{{/if}}>Date Created</option>
+        <option value="Creator" {{#if (eq order_by_category "Creator")}}selected{{/if}}>Creator</option>
+        <option value="Description" {{#if (eq order_by_category "Description")}}selected{{/if}}>Description</option>
+        <option value="Associated" {{#if (eq order_by_category "Associated")}}selected{{/if}}>Associated with</option>
+    </select>
+
+    <label for="disabled-field">Disabled</label>
+    <select name="disabled" id="disabled-field">
+        <option value="any" {{#if (eq disabled "None")}}selected{{/if}}>Any</option>
+        <option value="true" {{#if (eq disabled "true")}}selected{{/if}}>Disabled</option>
+        <option value="false" {{#if (eq disabled "false")}}selected{{/if}}>Enabled</option>
+    </select>
+
+    <label for="asc-field">Order</label>
+    <select name="asc" id="asc-field">
+        <option value="true" {{#if (eq asc true)}}selected{{/if}}>Asc</option>
+        <option value="false" {{#if (eq asc false)}}selected{{/if}}>Desc</option>
+    </select>
+
+    <label for="from-creator-field">Creator</label>
+    <input style="width: 64px;" type="text" name="from_creator" id="from-creator-field" value="{{from_creator}}"/>
+
+    <label for="offset-field">Offset</label>
+    <input style="width: 48px;" type="number" name="offset" id="offset-field" value="{{offset}}" min="0" step="1"/>
+
+    <label for="limit-field">Limit</label>
+    <input style="width: 48px;" type="number" name="limit" id="limit-field" value="{{limit}}" min="0" step="1"/>
+
+    <button type="submit">Query</button>
+</form>
+<a href="/web/search">Change to search</a>
+{{/if}}
+    
+{{#if clients}}
+    <table style="width:100%">
+        <tr>
+            <th>Common name</th>
+            <th>Creation date</th>
+            <th>Creator</th>
+            <th>Associated with</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {{#each clients}}
+        <tr>
+            <td>
+                <a href="/web/view/{{url_encode id}}">{{id}}</a>
+            </td>
+            <td>{{date_created}}</td>
+            <td>{{creator_id}}</td>
+            <td>{{associated_with}}</td>
+            <td>{{description}}</td>
+            <td>{{disabled}}</td>
+            <td>
+                <a href="/web/view/{{url_encode id}}">View</a>
+                <a href="/web/edit/{{url_encode id}}">Edit</a>
+                <a href="/api/config/{{url_encode id}}" target="_blank">Config</a>
+                <a href="/web/cr/{{url_encode id}}">Revoke</a>
+                {{#if ../dangerous}}
+                <a href="/web/crr/{{url_encode id}}">Delete</a>
+                {{/if}}
+            </td>
+        </tr>
+        {{/each}}
+    </table>
+{{else}}
+    <div style="text-align: center;">
+    {{#if is_no_query}}
+        No search query
+    {{else}}
+        No results
+    {{/if}}
+    </div>
+{{/if}}
+
+{{/inline}}
+{{> (lookup this "parent")}}

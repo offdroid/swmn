@@ -1,0 +1,12 @@
+[package]
+name = "api"
+version = "0.1.0"
+authors = ["Filip Skubacz <filip.skubacz00@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cert = { path = "../cert/" }
+database = { path = "../database/" }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"

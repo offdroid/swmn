@@ -1,0 +1,66 @@
+{{#*inline "page"}}
+<h1>
+    {{#if is_edit}}Edit client{{else}}Client{{/if}} "{{client.id}}"
+</h1>
+
+{{#if is_edit}}
+<a href="/web/view/{{client.id}}">Cancel edit</a>
+{{else}}
+<a href="/web/edit/{{client.id}}">Edit client</a>
+{{/if}}
+<hr>
+
+<style>
+input[type=text], input[type=password], select {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 8px 0;
+  display: inline-block;
+  box-sizing: border-box;
+}
+</style>
+
+<form id="{{#if edit}}edit{{else}}view{{/if}}_client" method="POST">
+    <label for="id-field">Common name (id)</label>
+    <input type="text" name="common-name" id="id-field" placeholder="Common name" value="{{client.id}}" disabled>
+
+    <label for="date-created-field">Creation date</label>
+    <input type="text" name="date_created" id="date-created-field" value="{{client.date_created}}" disabled>
+
+    <label for="assoc-field">Associated with</label>
+    <input type="text" name="associated_with" id="assoc-field" placeholder="[Optional]" value="{{client.associated_with}}" {{#unless is_edit}}disabled{{/unless}}>
+
+    <label for="desc-field">Description</label>
+    <input type="text" name="description" id="desc-field" placeholder="[Optional]" value="{{client.description}}" {{#unless is_edit}}disabled{{/unless}}>
+
+    <label for="creator-field">Created by</label>
+    <input type="text" name="creator_id" id="creator-field" value="{{client.creator_id}}" disabled>
+
+    <label for="disabled-field">Status</label>
+    <select name="disabled" id="disabled-field" disabled>
+        <option value="true" {{#if client.disabled}}selected{{/if}}>Disabled</option>
+        <option value="false" {{#unless client.disabled}}selected{{/unless}}>Enabled</option>
+    </select>
+
+    <hr>
+    Actions:
+    <ul>
+        <li>
+            <a href="/web/cr/{{url_encode client.id}}">Revoke</a>
+        </li>
+{{#if ../dangerous}}
+        <li>
+            <a href="/web/crr/{{url_encode client.id}}">Revoke and remove</a>
+        </li>
+{{/if}}
+{{#if is_edit}}
+        <li>
+            <input type="submit" value="Update" id="update-button">
+        </li>
+{{/if}}
+    </ul>
+
+</form>
+
+{{/inline}}
+{{> (lookup this "parent")}}

@@ -1,0 +1,46 @@
+{{#*inline "page"}}
+
+<style>
+input[type=text], input[type=password], select {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 8px 0;
+  display: inline-block;
+  box-sizing: border-box;
+}
+</style>
+
+<h1>Revoke{{#if remove}} and delete {{/if}} "{{client.id}}"?</h1>
+
+<p>
+Are you sure? <b>This action cannot be undone!</b>
+</p>
+{{#if is_remove}}
+<p>
+<b style="color: red;">
+    Revoking and deleting is not recommended!
+</b>
+</p>
+{{/if}}
+
+<form id="revoke" method="POST">
+{{#if is_remove}}
+    <label for="id-confirm-field">Confirm by typing the name of the client</label>
+    <input type="text" name="id_confirm" id="id-confirm-field" placeholder="Type {{client.id}}">
+{{else}}
+    <input type="checkbox" name="confirm" id="confirm-field">
+    <label for="confirm-field">Revoke the certificate</label>
+    <br/>
+    <br/>
+{{/if}}
+
+{{#if ca_pass_required}}
+    <label for="ca-passphrase-field">CA Passphrase</label>
+    <input type="password" name="ca_passphrase" id="ca-passphrase-field" placeholder="CA passphrase">
+{{/if}}
+    <br/>
+    <input type="submit" value="Revoke" id="revoke-button">
+</form>
+
+{{/inline}}
+{{> (lookup this "parent")}}

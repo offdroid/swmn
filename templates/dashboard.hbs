@@ -1,0 +1,17 @@
+{{#*inline "page"}}
+<h1>Hello {{username}}</h1>
+
+Actions:
+<ul>
+    <li>
+        <a href="/web/new_client">Create new client</a>
+    </li>
+    <li>
+        <a href="/web/list">View clients</a>
+    </li>
+    <li>
+        <a href="/web/search">Search clients</a>
+    </li>
+</ul>
+{{/inline}}
+{{> (lookup this "parent")}}

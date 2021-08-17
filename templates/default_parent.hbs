@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{title}} | swmn</title>
+    </head>
+    <body style="margin: 0;">
+        <div style="background-color: #f0f0f0; padding: 8px; width: 100%">
+            <form action="/web/logout" method="post">
+                <big><b><a href="/web/dashboard">swmn</a></b></big>
+                <span>Logged in as <i>{{username}}</i></span>
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+        <div style="margin: 8px">
+            {{> page}}
+        </div>
+    </body>
+</html>
