@@ -83,7 +83,17 @@ mod request {
                 let cookie = Cookie::build(COOKIE_USER_ID, user_login.username.to_owned())
                     .path("/")
                     .max_age(time::Duration::days(1))
-                    .secure(true)
+                    .secure(
+                        std::env::var("SECURE_COOKIES")
+                            .map(|x| {
+                                if let "1" | "true" | "yes" = x.to_lowercase().as_str() {
+                                    true
+                                } else {
+                                    false
+                                }
+                            })
+                            .unwrap_or(false),
+                    )
                     .finish();
                 cookies.add_private(cookie);
                 Redirect::to(uri!("/web", dashboard))

@@ -18,18 +18,22 @@ A basic but flexible certificate management solution intended for managing certi
 
 ## Installation
 
-Directly install from the repository with
+For the api-only version, install directly using
 ```bash
-cargo install --git https://github.com/offdroid/swmn.git --features web-interface
+cargo install --git https://github.com/offdroid/swmn.git
 ```
-Then run with `swmn`. However, using swmn without any prior configuration is rather pointless.
+For a version with the web interface, it is best to clone the repository as follows.
+```bash
+git clone https://github.com/offdroid/swmn.git
+cd swmn
+cargo b --features web-interface
+```
 
 ## Managing users
 
 Shut the server down if it is running, then create the first user with
 ```bash
 swmn user set <username>
-# followed by a prompt for the password
 ```
 This creates a new user or overrides the password of an existing one.
 On the other hand, to delete users use
@@ -168,9 +172,11 @@ The TLS support of Rocket, which swmn is built on, is not considered production 
 Compile with the `tls` feature and see [Rocket: Configuring TLS](https://rocket.rs/v0.5-rc/guide/configuration/#tls).
 Alternatively and the probably better option would be to use a reverse proxy, such as [NGINX](https://www.nginx.com/) to add TLS.
 
+To enable secure cookies (recommended if using TLS) set the environment variable `SECURE_COOKIES` to `true`.
+
 # Customizing the interface
 
-The html web-interface is very basic and works without JS — by design.
+The html web interface is very basic and works without JS — by design.
 It can easily be replaced or extended through modification of the handlebars templates in [templates](./templates).
 
 More ambitious extensions should replace the [`web`](./web/)-crate and/or make use of the REST-apis on the client-side.

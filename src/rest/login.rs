@@ -28,7 +28,17 @@ async fn login(db: Db, cookies: &CookieJar<'_>, user_login: Json<UserLogin>) -> 
             let cookie = Cookie::build(COOKIE_USER_ID, user_login.username.clone())
                 .path("/")
                 .max_age(time::Duration::days(1))
-                .secure(true)
+                .secure(
+                    std::env::var("SECURE_COOKIES")
+                        .map(|x| {
+                            if let "1" | "true" | "yes" = x.to_lowercase().as_str() {
+                                true
+                            } else {
+                                false
+                            }
+                        })
+                        .unwrap_or(false),
+                )
                 .finish();
             cookies.add_private(cookie);
             Status::Ok
