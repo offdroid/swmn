@@ -5,7 +5,7 @@ authors = ["Filip Skubacz <filip.skubacz00@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-pyo3 = { version = "0.14.2", features = ["auto-initialize"] }
+pyo3 = { version = "0.14.3", features = ["auto-initialize"] }
 anyhow = "1.0"
 thiserror = "1.0"
 log = "0.4"

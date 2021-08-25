@@ -30,13 +30,7 @@ async fn login(db: Db, cookies: &CookieJar<'_>, user_login: Json<UserLogin>) -> 
                 .max_age(time::Duration::days(1))
                 .secure(
                     std::env::var("SECURE_COOKIES")
-                        .map(|x| {
-                            if let "1" | "true" | "yes" = x.to_lowercase().as_str() {
-                                true
-                            } else {
-                                false
-                            }
-                        })
+                        .map(|x| matches!(x.to_lowercase().as_str(), "1" | "true" | "yes"))
                         .unwrap_or(false),
                 )
                 .finish();

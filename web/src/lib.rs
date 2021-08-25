@@ -2,6 +2,8 @@
 #[macro_use]
 extern crate rocket;
 
+use std::io::Cursor;
+
 use cert::PythonError;
 use common::CaPass;
 use database::{
@@ -12,9 +14,9 @@ use diesel::result::{DatabaseErrorKind, Error::DatabaseError};
 use rocket::{
     fairing::AdHoc,
     form::Form,
-    http::{Cookie, CookieJar, RawStr, Status},
-    response::{content::Html, Redirect},
-    State,
+    http::{ContentType, Cookie, CookieJar, RawStr, Status},
+    response::{self, content::Html, Redirect, Responder},
+    Request, Response, State,
 };
 use rocket_dyn_templates::{
     handlebars::{self, Handlebars, JsonRender},
@@ -31,6 +33,7 @@ pub(crate) struct UserLogin {
     pub(crate) password: String,
 }
 
+/// Take the first argument or the second one if the first is `None`
 macro_rules! prio {
     ($first:expr, $second:expr) => {
         $first
@@ -39,6 +42,7 @@ macro_rules! prio {
     };
 }
 
+/// Filter options for client lists
 #[derive(Debug, Deserialize, FromForm, PartialEq, Default, Clone)]
 pub(crate) struct Filters {
     pub(crate) order_by_category: Option<ClientOrderCategories>,
@@ -49,16 +53,40 @@ pub(crate) struct Filters {
     pub(crate) limit: Option<u32>,
 }
 
+/// Wrapper around a downloadable config as a file with a filename
+struct DownloadableConfig {
+    name: String,
+    content: String,
+}
+
+impl<'r> Responder<'r, 'static> for DownloadableConfig {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+        Response::build()
+            .sized_body(self.content.len(), Cursor::new(self.content))
+            .raw_header(
+                "Content-Disposition",
+                format!(
+                    "attachment; filename=\"{}.ovpn\"",
+                    self.name.replace("\"", "'")
+                ),
+            )
+            .header(ContentType::new("application", "x-openvpn-profile"))
+            .ok()
+    }
+}
+
 #[get("/login?<invalid>")]
-pub(crate) fn login(invalid: Option<bool>) -> Html<Template> {
+pub(crate) fn login(invalid: Option<bool>, user: Option<AuthenticatedUser>) -> Html<Template> {
     let context = json!({
         "title": "Login",
         "parent": "default_parent",
         "invalid": invalid.unwrap_or(false),
+        "username": user.map(AuthenticatedUser::id),
     });
     Html(Template::render("login", context))
 }
 
+/// Form request handlers
 mod request {
     use common::CaPass;
     use database::models::Db;
@@ -85,13 +113,7 @@ mod request {
                     .max_age(time::Duration::days(1))
                     .secure(
                         std::env::var("SECURE_COOKIES")
-                            .map(|x| {
-                                if let "1" | "true" | "yes" = x.to_lowercase().as_str() {
-                                    true
-                                } else {
-                                    false
-                                }
-                            })
+                            .map(|x| matches!(x.to_lowercase().as_str(), "1" | "true" | "yes"))
                             .unwrap_or(false),
                     )
                     .finish();
@@ -238,6 +260,61 @@ mod request {
             Status::InternalServerError
         })
     }
+
+    #[derive(FromForm)]
+    pub(crate) struct RevokeRemoveConfirmation {
+        id_confirm: String,
+        ca_passphrase: Option<String>,
+    }
+
+    #[post("/crr/<id>", data = "<confirmation>")]
+    pub(crate) async fn revoke_remove_client(
+        db: Db,
+        _user: AuthenticatedUser,
+        id: String,
+        ca_pass: &State<CaPass>,
+        cert: &State<cert::Config>,
+        confirmation: Form<RevokeRemoveConfirmation>,
+    ) -> Result<Redirect, Status> {
+        let mut confirmation = confirmation.into_inner();
+        if confirmation.id_confirm.trim() != id.trim() {
+            return Err(Status::BadRequest);
+        }
+        if let Some(true) = confirmation.ca_passphrase.as_ref().map(|s| s.is_empty()) {
+            confirmation.ca_passphrase = None;
+        }
+        if !ca_pass.is_present() && confirmation.ca_passphrase.is_none() {
+            return Err(Status::BadRequest);
+        }
+
+        core_api::revoke_remove_client(
+            &db,
+            id.clone(),
+            prio!(confirmation.ca_passphrase, ca_pass.expose()),
+            cert,
+        )
+        .await
+        .map(|_| Redirect::to(uri!("/web", super::dashboard)))
+        .map_err(|err| {
+            if let Some(DatabaseError(DatabaseErrorKind::UniqueViolation, _)) =
+                err.downcast_ref::<diesel::result::Error>()
+            {
+                return Status::Conflict;
+            } else if let Some(PythonError { source: _ }) = err.downcast_ref::<PythonError>() {
+                let b: String = err
+                    .chain()
+                    .enumerate()
+                    .rev()
+                    .fold(String::new(), |acc, (idx, x)| {
+                        format!("{}\n{}. {}", acc, err.chain().count() - idx, x)
+                    });
+                warn!("Backtrace: {}", b);
+                return Status::InternalServerError;
+            }
+            warn!("Other error = `{}`", err);
+            Status::InternalServerError
+        })
+    }
 }
 
 #[get("/dashboard")]
@@ -250,6 +327,7 @@ pub(crate) fn dashboard(user: AuthenticatedUser) -> Html<Template> {
     Html(Template::render("dashboard", context))
 }
 
+/// List of clients optionally filtered
 #[get("/list?<filter..>")]
 pub(crate) async fn list(
     db: Db,
@@ -379,6 +457,27 @@ pub(crate) async fn view_client(
     Ok(Html(Template::render("details_client", context)))
 }
 
+#[get("/download/<id>")]
+pub(crate) async fn download_client_config(
+    db: Db,
+    user: AuthenticatedUser,
+    id: String,
+    cert: &State<cert::Config>,
+) -> Result<DownloadableConfig, Status> {
+    info!(
+        "Client config retrieval: client id = `{}`, requester = `{}`",
+        id,
+        user.clone().id(),
+    );
+    api::get_client_cert(&db, id.clone(), cert)
+        .await
+        .map(|config| DownloadableConfig {
+            name: id,
+            content: config,
+        })
+        .map_err(|_| Status::InternalServerError)
+}
+
 #[get("/cr/<id>")]
 pub(crate) async fn confirm_revoke(
     db: Db,
@@ -460,10 +559,12 @@ pub fn stage() -> AdHoc {
                     edit_client,
                     request::edit_client,
                     view_client,
+                    download_client_config,
                     list,
                     confirm_revoke,
                     request::revoke_client,
                     confirm_revoke_remove,
+                    request::revoke_remove_client,
                     search,
                     search_no_query,
                     web,

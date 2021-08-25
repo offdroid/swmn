@@ -46,6 +46,9 @@ input[type=text], input[type=password], select {
     Actions:
     <ul>
         <li>
+            <a href="/web/download/{{url_encode client.id}}">Download config</a>
+        </li>
+        <li>
             <a href="/web/cr/{{url_encode client.id}}">Revoke</a>
         </li>
 {{#if ../dangerous}}

@@ -241,16 +241,16 @@ pub(crate) async fn get_client(
     })
 }
 
-/// Get the client configuration and certifiacte
-#[get("/client/<id>/cert")]
-pub(crate) async fn get_client_cert(
+/// Get the client configuration including the certifiacte
+#[get("/client/<id>/config")]
+pub(crate) async fn get_client_config(
     db: Db,
     user: AuthenticatedUser,
     id: String,
     cert: &State<cert::Config>,
 ) -> Result<String, ApiError> {
     info!(
-        "Client cert/config retrieval: client id = `{}`, requester = `{}`",
+        "Client config retrieval: client id = `{}`, requester = `{}`",
         id,
         user.clone().id(),
     );
@@ -268,6 +268,7 @@ pub(crate) async fn get_client_cert(
     })
 }
 
+/// Count of clients optionally with filters
 #[get("/clients_overview?<filter..>")]
 pub(crate) async fn get_clients_count(
     db: Db,
@@ -414,6 +415,8 @@ pub(crate) async fn revoke_remove_client(
 }
 
 /// Search clients with SQLite FTS
+/// 
+/// The search query is defined by the URL parameter `q`
 #[get("/search?<q>")]
 pub(crate) async fn search(
     db: Db,
@@ -435,7 +438,7 @@ pub fn stage() -> AdHoc {
                 create_client,
                 update_client,
                 get_client,
-                get_client_cert,
+                get_client_config,
                 get_clients,
                 get_clients_count,
                 revoke_client,

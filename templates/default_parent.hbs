@@ -9,8 +9,10 @@
         <div style="background-color: #f0f0f0; padding: 8px; width: 100%">
             <form action="/web/logout" method="post">
                 <big><b><a href="/web/dashboard">swmn</a></b></big>
+                {{#if username}}
                 <span>Logged in as <i>{{username}}</i></span>
                 <button type="submit">Logout</button>
+                {{/if}}
             </form>
         </div>
         <div style="margin: 8px">
