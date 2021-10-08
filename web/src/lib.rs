@@ -201,7 +201,7 @@ mod request {
                 .fold(String::new(), |acc, (idx, x)| {
                     format!("{}\n{}. {}", acc, err.chain().count() - idx, x)
                 });
-            warn!("backtrace: {}", b);
+            warn!("Backtrace: {}", b);
             Status::InternalServerError
         })
     }
@@ -341,9 +341,12 @@ pub(crate) async fn list(
         f.order_by_category,
         f.asc,
         f.disabled,
-        f.from_creator,
+        match f.from_creator {
+            Some(a) if a.is_empty() => None,
+            _ => f.from_creator,
+        },
         f.offset,
-        f.limit,
+        if let Some(0) = f.limit { None } else { f.limit },
     )
     .await
     .map_err(|_err| Status::InternalServerError)?;
@@ -430,6 +433,7 @@ pub(crate) async fn edit_client(
         "parent": "default_parent",
         "username": user.id(),
         "client": client,
+        "dangerous": true,
         "is_edit": true,
     });
     Ok(Html(Template::render("details_client", context)))
@@ -452,6 +456,7 @@ pub(crate) async fn view_client(
         "parent": "default_parent",
         "username": user.id(),
         "client": client,
+        "dangerous": true,
         "is_edit": false,
     });
     Ok(Html(Template::render("details_client", context)))

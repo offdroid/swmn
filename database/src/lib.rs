@@ -346,13 +346,11 @@ fn query_clients_filtered(
         ClientOrderCategories::Associated => order_by(query, clients::associated_with, asc),
         _ => order_by(query, clients::id, asc),
     };
-    let query = match offset {
-        Some(offset) => query.offset(offset.into()),
-        None => query,
-    };
-    let query = match limit {
-        Some(limit) => query.limit(limit.into()),
-        None => query,
+    let query = match (offset, limit) {
+        (Some(offset), Some(limit)) => query.offset(offset.into()).limit(limit.into()),
+        (None, Some(limit)) => query.limit(limit.into()),
+        (Some(offset), None) => query.offset(offset.into()).limit(i64::MAX),
+        _ => query,
     };
     let query = match disabled {
         Some(v) => query.filter(clients::disabled.eq(v)),
@@ -387,6 +385,16 @@ pub fn get_clients_filtered(
     offset: Option<u32>,
     limit: Option<u32>,
 ) -> Result<Vec<Client>, anyhow::Error> {
+    let q = query_clients_filtered(
+        Some(ClientOrderCategories::Id),
+        asc,
+        disabled,
+        Some("test".to_string()),
+        offset,
+        limit,
+    );
+    let dq = diesel::debug_query::<Sqlite, _>(&q);
+    trace!("debug: {}", dq.to_string());
     query_clients_filtered(
         order_by_category,
         asc,
@@ -396,6 +404,10 @@ pub fn get_clients_filtered(
         limit,
     )
     .load::<Client>(conn)
+    .map_err(|err| {
+        trace!("E: {}", err);
+        return err;
+    })
     .map_err(anyhow::Error::from)
 }
 
